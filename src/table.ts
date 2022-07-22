@@ -2,12 +2,33 @@ import assert from "node:assert";
 import fs, { FileHandle } from "node:fs/promises";
 import { Block } from "./block";
 
+interface BlockEntries {
+  blockEntries: [Buffer, number][];
+  blockEntriesEnd: number;
+}
+
+function blockIdx(be: BlockEntries, key: Buffer): number {
+  return be.blockEntries
+    .slice()
+    .reverse()
+    .findIndex(([entryKey]) => entryKey.compare(key) <= 0);
+}
+
+function blockRange(be: BlockEntries, idx: number): [number, number] {
+  return [
+    be.blockEntries[idx][1],
+    idx + 1 === be.blockEntries.length
+      ? be.blockEntriesEnd
+      : be.blockEntries[idx + 1][1],
+  ];
+}
+
 export class Table {
   private path: string;
   private handle?: FileHandle;
 
-  private blockEntries: [Buffer, number][] = [];
-  private metaBlockStart = 0;
+  blockEntries: [Buffer, number][] = [];
+  blockEntriesEnd = 0;
 
   constructor(path: string) {
     this.path = path;
@@ -71,36 +92,20 @@ export class Table {
         const offset = value.readUInt32BE(0);
         this.blockEntries.push([key, offset]);
       });
-      this.metaBlockStart = metaBlockOffsets[0];
+      this.blockEntriesEnd = metaBlockOffsets[0];
     }
-  }
-
-  private blockIdx(key: Buffer): number {
-    return this.blockEntries
-      .slice()
-      .reverse()
-      .findIndex(([entryKey]) => entryKey.compare(key) <= 0);
-  }
-
-  private blockRange(idx: number): [number, number] {
-    return [
-      this.blockEntries[idx][1],
-      idx + 1 === this.blockEntries.length
-        ? this.metaBlockStart
-        : this.blockEntries[idx + 1][1],
-    ];
   }
 
   // get finds the given key, or undefined if it's not there
   async get(key: Buffer): Promise<Buffer | undefined> {
     await this.ensureOpen();
 
-    const keyBlockIdx = this.blockIdx(key);
+    const keyBlockIdx = blockIdx(this, key);
     if (keyBlockIdx === -1) {
       return undefined;
     }
 
-    const [blockStart, blockEnd] = this.blockRange(keyBlockIdx);
+    const [blockStart, blockEnd] = blockRange(this, keyBlockIdx);
     const blockBuf = Buffer.alloc(blockEnd - blockStart);
     await this.handle?.read(blockBuf, 0, blockBuf.byteLength, blockStart);
 
