@@ -2,25 +2,33 @@ import assert from "node:assert";
 import fs, { FileHandle } from "node:fs/promises";
 import { Block } from "./block";
 
-interface BlockEntries {
-  blockEntries: [Buffer, number][];
-  blockEntriesEnd: number;
-}
+type BlockEntryTable = [Buffer, number][];
 
-function blockIdx(be: BlockEntries, key: Buffer): number {
-  return be.blockEntries
+function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
+  return blockEntries
     .slice()
     .reverse()
     .findIndex(([entryKey]) => entryKey.compare(key) <= 0);
 }
 
-function blockRange(be: BlockEntries, idx: number): [number, number] {
-  return [
-    be.blockEntries[idx][1],
-    idx + 1 === be.blockEntries.length
-      ? be.blockEntriesEnd
-      : be.blockEntries[idx + 1][1],
+async function readBlock(
+  handle: FileHandle,
+  entries: BlockEntryTable,
+  blocksEnd: number,
+  idx: number
+): Promise<Block> {
+  const [start, end] = [
+    entries[idx][1],
+    idx + 1 === entries.length ? blocksEnd : entries[idx + 1][1],
   ];
+
+  const blockBuf = Buffer.alloc(end - start);
+  assert.ok(
+    (await handle.read(blockBuf, 0, blockBuf.byteLength, start)).bytesRead ===
+      blockBuf.byteLength
+  );
+
+  return new Block(blockBuf);
 }
 
 export class Table {
@@ -100,20 +108,81 @@ export class Table {
   async get(key: Buffer): Promise<Buffer | undefined> {
     await this.ensureOpen();
 
-    const keyBlockIdx = blockIdx(this, key);
+    const keyBlockIdx = blockIdx(this.blockEntries, key);
     if (keyBlockIdx === -1) {
       return undefined;
     }
 
-    const [blockStart, blockEnd] = blockRange(this, keyBlockIdx);
-    const blockBuf = Buffer.alloc(blockEnd - blockStart);
-    await this.handle?.read(blockBuf, 0, blockBuf.byteLength, blockStart);
-
-    const block = new Block(blockBuf);
+    assert.ok(this.handle !== undefined, "Error: invalid file handle");
+    const block = await readBlock(
+      this.handle,
+      this.blockEntries,
+      this.blockEntriesEnd,
+      keyBlockIdx
+    );
     return block.get(key);
+  }
+
+  async cursor(): Promise<Cursor> {
+    await this.ensureOpen();
+    return new Cursor(this.handle, this.blockEntries, this.blockEntriesEnd);
   }
 
   async close() {
     this.handle?.close();
+  }
+}
+
+class Cursor {
+  private handle: FileHandle;
+  private entries: BlockEntryTable;
+  private entriesEnd: number;
+
+  private currentBlockIndex = 0;
+  private currentBlock?: Block;
+  private currentBlockOffset = 0;
+
+  constructor(
+    handle: FileHandle | undefined,
+    entries: BlockEntryTable,
+    entriesEnd: number
+  ) {
+    assert.ok(handle !== undefined, "Error: invalid file handle");
+    this.handle = handle;
+    this.entries = entries;
+    this.entriesEnd = entriesEnd;
+  }
+
+  private async ensureBlock() {
+    if (!this.currentBlock) {
+      this.currentBlock = await readBlock(
+        this.handle,
+        this.entries,
+        this.entriesEnd,
+        this.currentBlockIndex
+      );
+    }
+  }
+
+  async next(): Promise<[Buffer, Buffer] | undefined> {
+    await this.ensureBlock();
+
+    assert.ok(this.currentBlock !== undefined, "Error: invalid block");
+
+    // move to next block if at the end of the current block
+    if (this.currentBlockOffset >= this.currentBlock.entries.length) {
+      this.currentBlockOffset = 0;
+      this.currentBlockIndex++;
+      await this.ensureBlock();
+    }
+
+    // if at the end of the table
+    if (this.currentBlockIndex >= this.entries.length) {
+      return undefined;
+    }
+
+    const [key, value] = this.currentBlock.entries[this.currentBlockOffset];
+    this.currentBlockOffset++;
+    return [key, value];
   }
 }
