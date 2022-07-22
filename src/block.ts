@@ -1,7 +1,7 @@
 import { Buffer } from "node:buffer";
 import assert from "node:assert";
 
-export const BLOCK_SIZE_TARGET = 64000;
+export const BLOCK_SIZE_TARGET = 65536;
 const FIELD_LIMIT = 4294967295;
 const SHARED_SIZE_OFFSET = 0;
 const KEY_SIZE_OFFSET = 4;
