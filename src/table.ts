@@ -1,10 +1,11 @@
 import assert from "node:assert";
 import fs, { FileHandle } from "node:fs/promises";
 import { Block } from "./block";
+import { Cursor } from "./cursor";
 
-type BlockEntryTable = [Buffer, number][];
+export type BlockEntryTable = [Buffer, number][];
 
-function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
+export function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
   const idx = blockEntries
     .slice()
     .reverse()
@@ -17,7 +18,7 @@ function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
   return blockEntries.length - idx;
 }
 
-async function readBlock(
+export async function readBlock(
   handle: FileHandle,
   entries: BlockEntryTable,
   blocksEnd: number,
@@ -139,70 +140,4 @@ export class Table {
   async close() {
     this.handle?.close();
   }
-}
-
-class Cursor {
-  private handle: FileHandle;
-  private entries: BlockEntryTable;
-  private entriesEnd: number;
-
-  private currentBlockIndex = 0;
-  private currentBlock?: Block;
-  private currentBlockOffset = 0;
-
-  constructor(
-    handle: FileHandle | undefined,
-    entries: BlockEntryTable,
-    entriesEnd: number
-  ) {
-    assert.ok(handle !== undefined, "Error: invalid file handle");
-    this.handle = handle;
-    this.entries = entries;
-    this.entriesEnd = entriesEnd;
-  }
-
-  private async ensureBlock() {
-    if (!this.currentBlock) {
-      this.currentBlock = await readBlock(
-        this.handle,
-        this.entries,
-        this.entriesEnd,
-        this.currentBlockIndex
-      );
-    }
-  }
-
-  async next(): Promise<[Buffer, Buffer] | undefined> {
-    await this.ensureBlock();
-    assert.ok(this.currentBlock !== undefined, "Error: invalid block");
-
-    // move to next block if at the end of the current block
-    if (this.currentBlockOffset >= this.currentBlock.entries.length) {
-      this.currentBlockOffset = 0;
-      this.currentBlockIndex++;
-      this.currentBlock = undefined;
-    }
-
-    // if at the end of the table
-    if (this.currentBlockIndex >= this.entries.length) {
-      return undefined;
-    }
-
-    await this.ensureBlock();
-    assert.ok(this.currentBlock !== undefined, "Error: invalid block");
-
-    const [key, value] = this.currentBlock.entries[this.currentBlockOffset];
-    this.currentBlockOffset++;
-    return [key, value];
-  }
-
-  // async seek(key: Buffer): Promise<void> {
-  //   this.currentBlockIndex = blockIdx(this.entries, key);
-  //   this.currentBlockOffset = 0;
-  //   this.ensureBlock();
-
-  //   const idx = this.currentBlock?.entries.findIndex(
-  //     ([entryKey]) => entryKey.compare(key) >= 0
-  //   );
-  // }
 }
