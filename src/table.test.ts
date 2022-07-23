@@ -3,9 +3,11 @@ import path from "path";
 import { TableBuilder } from "./table-builder";
 import { Table } from "./table";
 
+jest.setTimeout(30000);
+
 let testDir: string;
 let tablePath: string;
-const recordCount = 100;
+const recordCount = 15450;
 
 beforeAll(async () => {
   testDir = await mkdtemp("tmp/test");

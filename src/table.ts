@@ -5,10 +5,16 @@ import { Block } from "./block";
 type BlockEntryTable = [Buffer, number][];
 
 function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
-  return blockEntries
+  const idx = blockEntries
     .slice()
     .reverse()
     .findIndex(([entryKey]) => entryKey.compare(key) <= 0);
+
+  if (idx < 0) {
+    return idx;
+  }
+
+  return blockEntries.length - idx;
 }
 
 async function readBlock(
@@ -52,17 +58,18 @@ export class Table {
 
     // read number of meta blocks
     const sizeBuf = Buffer.alloc(4);
-
     assert.equal(
       (await this.handle.read(sizeBuf, 0, 4, stat.size - 4)).bytesRead,
       4,
       "metadata block count read fewer bytes than expected"
     );
-    const metadataBlockCount = sizeBuf.readUInt32BE(0);
+    const metadataBlockCount = sizeBuf.readUInt32BE();
 
     // read offsets of meta blocks
     const blockRefBuf = Buffer.alloc(metadataBlockCount * 6);
-    const metaBlockPos = stat.size - metadataBlockCount * 6 - 4;
+    const trailerLength = metadataBlockCount * 6 + 4;
+    const metaBlockPos = stat.size - trailerLength;
+
     assert.equal(
       (
         await this.handle.read(
@@ -75,6 +82,7 @@ export class Table {
       metadataBlockCount * 6,
       "Block ref read fewer bytes than expected"
     );
+
     const metaBlockOffsets: number[] = [];
     for (let i = 0; i < metadataBlockCount; i++) {
       metaBlockOffsets[i] = blockRefBuf.readUIntBE(i * 6, 6);
@@ -97,7 +105,7 @@ export class Table {
       );
 
       new Block(blockBuf).entries.map(([key, value]) => {
-        const offset = value.readUInt32BE(0);
+        const offset = value.readIntBE(2, 6);
         this.blockEntries.push([key, offset]);
       });
       this.blockEntriesEnd = metaBlockOffsets[0];
@@ -166,14 +174,13 @@ class Cursor {
 
   async next(): Promise<[Buffer, Buffer] | undefined> {
     await this.ensureBlock();
-
     assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 
     // move to next block if at the end of the current block
     if (this.currentBlockOffset >= this.currentBlock.entries.length) {
       this.currentBlockOffset = 0;
       this.currentBlockIndex++;
-      await this.ensureBlock();
+      this.currentBlock = undefined;
     }
 
     // if at the end of the table
@@ -181,8 +188,21 @@ class Cursor {
       return undefined;
     }
 
+    await this.ensureBlock();
+    assert.ok(this.currentBlock !== undefined, "Error: invalid block");
+
     const [key, value] = this.currentBlock.entries[this.currentBlockOffset];
     this.currentBlockOffset++;
     return [key, value];
   }
+
+  // async seek(key: Buffer): Promise<void> {
+  //   this.currentBlockIndex = blockIdx(this.entries, key);
+  //   this.currentBlockOffset = 0;
+  //   this.ensureBlock();
+
+  //   const idx = this.currentBlock?.entries.findIndex(
+  //     ([entryKey]) => entryKey.compare(key) >= 0
+  //   );
+  // }
 }

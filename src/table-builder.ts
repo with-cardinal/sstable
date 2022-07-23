@@ -75,7 +75,6 @@ export class TableBuilder {
 
     // write the metadata blocks
     const metadataOffsets: number[] = [];
-    let idx = 0;
     let idxBlockBuilder: BlockBuilder | undefined;
 
     for (const [blockKey, blockOffset] of this.blockFirstKeys) {
@@ -83,12 +82,11 @@ export class TableBuilder {
       offsetBuf.writeUIntBE(blockOffset, 2, 6);
 
       if (!idxBlockBuilder || !idxBlockBuilder.add(blockKey, offsetBuf)) {
-        metadataOffsets[idx] = this.offset;
-
         if (idxBlockBuilder) {
           const block = idxBlockBuilder.close();
           idxBlockBuilder = undefined;
 
+          metadataOffsets.push(this.offset);
           await this.handle.write(block);
           this.offset = this.offset + block.byteLength;
         }
@@ -96,8 +94,6 @@ export class TableBuilder {
         idxBlockBuilder = new BlockBuilder();
         idxBlockBuilder.add(blockKey, offsetBuf);
       }
-
-      idx++;
     }
 
     // write trailing block builder
@@ -105,6 +101,7 @@ export class TableBuilder {
       const block = idxBlockBuilder.close();
       idxBlockBuilder = undefined;
 
+      metadataOffsets.push(this.offset);
       await this.handle.write(block);
       this.offset = this.offset + block.byteLength;
     }
@@ -114,8 +111,10 @@ export class TableBuilder {
     for (let i = 0; i < metadataOffsets.length; i++) {
       trailer.writeUIntBE(metadataOffsets[i], i * 6, 6);
     }
+
     trailer.writeUInt32BE(metadataOffsets.length, metadataOffsets.length * 6);
     await this.handle.write(trailer);
+
     await this.handle.close();
   }
 }
