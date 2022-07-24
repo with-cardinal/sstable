@@ -31,10 +31,10 @@ export class TableBuilder {
       this.blockBuilder = new BlockBuilder();
     }
 
-    const res = this.blockBuilder.add(key, value);
+    const res = await this.blockBuilder.add(key, value);
     if (!res) {
       await this.writeCurrentBlock();
-      this.blockBuilder.add(key, value);
+      await this.blockBuilder.add(key, value);
     }
 
     if (!this.blockFirstKey) {
@@ -81,7 +81,10 @@ export class TableBuilder {
       const offsetBuf = Buffer.alloc(8);
       offsetBuf.writeUIntBE(blockOffset, 2, 6);
 
-      if (!idxBlockBuilder || !idxBlockBuilder.add(blockKey, offsetBuf)) {
+      if (
+        !idxBlockBuilder ||
+        !(await idxBlockBuilder.add(blockKey, offsetBuf))
+      ) {
         if (idxBlockBuilder) {
           const block = idxBlockBuilder.close();
           idxBlockBuilder = undefined;
@@ -92,7 +95,7 @@ export class TableBuilder {
         }
 
         idxBlockBuilder = new BlockBuilder();
-        idxBlockBuilder.add(blockKey, offsetBuf);
+        await idxBlockBuilder.add(blockKey, offsetBuf);
       }
     }
 

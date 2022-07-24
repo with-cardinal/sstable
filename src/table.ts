@@ -35,7 +35,7 @@ export async function readBlock(
       blockBuf.byteLength
   );
 
-  return new Block(blockBuf);
+  return await Block.fromBuffer(blockBuf);
 }
 
 export class Table {
@@ -56,6 +56,7 @@ export class Table {
 
     const stat = await this.handle.stat();
     assert.ok(stat.size > 4, "Invalid table file");
+    console.log(this.path, stat.size);
 
     // read number of meta blocks
     const sizeBuf = Buffer.alloc(4);
@@ -105,7 +106,7 @@ export class Table {
         "Block read fewer bytes than expected"
       );
 
-      new Block(blockBuf).entries.map(([key, value]) => {
+      (await Block.fromBuffer(blockBuf)).entries.map(([key, value]) => {
         const offset = value.readIntBE(2, 6);
         this.blockEntries.push([key, offset]);
       });

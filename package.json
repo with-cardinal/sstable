@@ -29,5 +29,8 @@
   },
   "volta": {
     "node": "16.16.0"
+  },
+  "dependencies": {
+    "snappy": "7.1.1"
   }
 }
