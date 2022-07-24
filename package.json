@@ -14,7 +14,7 @@
     "url": "git+https://github.com/with-cardinal/sstree.git"
   },
   "author": "With Cardinal, LLC",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "homepage": "https://github.com/with-cardinal/sstree#readme",
   "devDependencies": {
     "@swc/core": "1.2.218",
