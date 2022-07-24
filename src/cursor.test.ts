@@ -5,11 +5,10 @@ import { Table } from "./table";
 
 let testDir: string;
 let tablePath: string;
-const recordCount = 15450;
+const recordCount = 100;
 
 beforeAll(async () => {
   testDir = await mkdtemp("tmp/test");
-
   tablePath = path.join(testDir, "table.sstable");
   const b = new TableBuilder(tablePath);
 
@@ -27,10 +26,11 @@ afterAll(async () => {
   await rm(testDir, { recursive: true });
 });
 
-test("build and access", async () => {
+test("seek", async () => {
   const t = new Table(tablePath);
 
   const c = await t.cursor();
+  await c.seek(Buffer.from("key0000000050"));
   let counter = 0;
   let done = false;
   while (!done) {
@@ -44,5 +44,5 @@ test("build and access", async () => {
 
   await t.close();
 
-  expect(counter).toBe(recordCount);
+  expect(counter).toBe(50);
 });

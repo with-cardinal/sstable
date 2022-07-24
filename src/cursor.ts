@@ -35,6 +35,10 @@ export class Cursor {
   }
 
   async next(): Promise<[Buffer, Buffer] | undefined> {
+    if (this.currentBlockIndex >= this.entries.length) {
+      return undefined;
+    }
+
     await this.ensureBlock();
     assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 
@@ -69,6 +73,7 @@ export class Cursor {
 
     this.currentBlockIndex = blockIndex;
     this.currentBlockOffset = 0;
+
     await this.ensureBlock();
     assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 

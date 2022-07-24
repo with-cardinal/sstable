@@ -15,7 +15,7 @@ export function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
     return idx;
   }
 
-  return blockEntries.length - idx;
+  return blockEntries.length - 1 - idx;
 }
 
 export async function readBlock(
