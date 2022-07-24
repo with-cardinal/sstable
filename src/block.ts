@@ -26,6 +26,7 @@ export class BlockBuilder {
     assert.ok(key.byteLength <= FIELD_LIMIT, "key length exceeds limit");
     assert.ok(value.byteLength <= FIELD_LIMIT, "value length exceeds limit");
 
+    // async compression performs better when the data is large
     let compressedValue;
     if (value.byteLength > COMPRESSION_ASYNC_THRESHOLD) {
       compressedValue = await compress(value);
