@@ -17,7 +17,7 @@
   "license": "UNLICENSED",
   "homepage": "https://github.com/with-cardinal/sstree#readme",
   "devDependencies": {
-    "@swc/core": "1.2.215",
+    "@swc/core": "1.2.218",
     "@swc/jest": "0.2.22",
     "@types/jest": "28.1.6",
     "@types/node": "17.0.16",
