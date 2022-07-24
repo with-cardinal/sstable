@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import assert from "node:assert";
-import { compressSync, uncompressSync } from "snappy";
+import { compress, compressSync, uncompress, uncompressSync } from "snappy";
 
 export const BLOCK_SIZE_TARGET = 131072;
 const FIELD_LIMIT = 4294967295;
@@ -9,6 +9,8 @@ const KEY_SIZE_OFFSET = 4;
 const VALUE_SIZE_OFFSET = 8;
 const KEY_OFFSET = 12;
 const RECORD_OVERHEAD = 12;
+
+const COMPRESSION_ASYNC_THRESHOLD = 32768;
 
 export class BlockBuilder {
   // the block's data
@@ -24,7 +26,12 @@ export class BlockBuilder {
     assert.ok(key.byteLength <= FIELD_LIMIT, "key length exceeds limit");
     assert.ok(value.byteLength <= FIELD_LIMIT, "value length exceeds limit");
 
-    const compressedValue = compressSync(value);
+    let compressedValue;
+    if (value.byteLength > COMPRESSION_ASYNC_THRESHOLD) {
+      compressedValue = await compress(value);
+    } else {
+      compressedValue = compressSync(value);
+    }
 
     const out = Buffer.alloc(key.byteLength + compressedValue.byteLength + 12);
 
@@ -90,11 +97,19 @@ export class Block {
         offset + KEY_OFFSET + keySize,
         valueEnd
       );
-      const value = uncompressSync(compressedValue, {
-        asBuffer: true,
-      }) as Buffer;
 
-      entries.push([key, value]);
+      if (valueSize > COMPRESSION_ASYNC_THRESHOLD) {
+        const value = (await uncompress(compressedValue, {
+          asBuffer: true,
+        })) as Buffer;
+        entries.push([key, value]);
+      } else {
+        const value = uncompressSync(compressedValue, {
+          asBuffer: true,
+        }) as Buffer;
+
+        entries.push([key, value]);
+      }
       offset = valueEnd;
     }
 
