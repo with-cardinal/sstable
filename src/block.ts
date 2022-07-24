@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import assert from "node:assert";
-import { compress, uncompressSync } from "snappy";
+import { compressSync, uncompressSync } from "snappy";
 
 export const BLOCK_SIZE_TARGET = 131072;
 const FIELD_LIMIT = 4294967295;
@@ -24,7 +24,7 @@ export class BlockBuilder {
     assert.ok(key.byteLength <= FIELD_LIMIT, "key length exceeds limit");
     assert.ok(value.byteLength <= FIELD_LIMIT, "value length exceeds limit");
 
-    const compressedValue = await compress(value);
+    const compressedValue = compressSync(value);
 
     const out = Buffer.alloc(key.byteLength + compressedValue.byteLength + 12);
 

@@ -56,7 +56,6 @@ export class Table {
 
     const stat = await this.handle.stat();
     assert.ok(stat.size > 4, "Invalid table file");
-    console.log(this.path, stat.size);
 
     // read number of meta blocks
     const sizeBuf = Buffer.alloc(4);
