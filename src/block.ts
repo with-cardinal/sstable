@@ -1,7 +1,8 @@
 import { Buffer } from "node:buffer";
 import assert from "node:assert";
+import { compress, uncompressSync } from "snappy";
 
-export const BLOCK_SIZE_TARGET = 65536;
+export const BLOCK_SIZE_TARGET = 131072;
 const FIELD_LIMIT = 4294967295;
 const SHARED_SIZE_OFFSET = 0;
 const KEY_SIZE_OFFSET = 4;
@@ -19,25 +20,27 @@ export class BlockBuilder {
   previousKey?: Buffer;
 
   // generate the bytes for a record
-  private buildRecord(key: Buffer, value: Buffer): Buffer {
+  private async buildRecord(key: Buffer, value: Buffer): Promise<Buffer> {
     assert.ok(key.byteLength <= FIELD_LIMIT, "key length exceeds limit");
     assert.ok(value.byteLength <= FIELD_LIMIT, "value length exceeds limit");
 
-    const out = Buffer.alloc(key.byteLength + value.byteLength + 12);
+    const compressedValue = await compress(value);
+
+    const out = Buffer.alloc(key.byteLength + compressedValue.byteLength + 12);
 
     // shared prefix - future optimization
     out.writeUInt32BE(0, SHARED_SIZE_OFFSET);
     out.writeUInt32BE(key.byteLength, KEY_SIZE_OFFSET);
-    out.writeUInt32BE(value.byteLength, VALUE_SIZE_OFFSET);
+    out.writeUInt32BE(compressedValue.byteLength, VALUE_SIZE_OFFSET);
 
     key.copy(out, KEY_OFFSET);
-    value.copy(out, KEY_OFFSET + key.byteLength);
+    compressedValue.copy(out, KEY_OFFSET + key.byteLength);
 
     return out;
   }
 
   // return true if block is added, false otherwise
-  add(key: Buffer, value: Buffer): boolean {
+  async add(key: Buffer, value: Buffer): Promise<boolean> {
     if (this.previousKey && this.previousKey?.compare(key) > 0) {
       throw new Error("added out of order");
     }
@@ -50,7 +53,7 @@ export class BlockBuilder {
       return false;
     }
 
-    const record = this.buildRecord(key, value);
+    const record = await this.buildRecord(key, value);
     this.records.push(record);
     this.byteLength += record.byteLength;
     this.previousKey = key;
@@ -69,7 +72,8 @@ export class BlockBuilder {
 export class Block {
   private _entries: [Buffer, Buffer][] = [];
 
-  constructor(buf: Buffer) {
+  static async fromBuffer(buf: Buffer): Promise<Block> {
+    const entries: [Buffer, Buffer][] = [];
     const exclTrailer = buf.subarray(0, -4);
 
     let offset = 0;
@@ -81,11 +85,24 @@ export class Block {
         offset + KEY_OFFSET + keySize
       );
       const valueEnd = offset + KEY_OFFSET + keySize + valueSize;
-      const value = exclTrailer.slice(offset + KEY_OFFSET + keySize, valueEnd);
 
-      this._entries.push([key, value]);
+      const compressedValue = exclTrailer.slice(
+        offset + KEY_OFFSET + keySize,
+        valueEnd
+      );
+      const value = uncompressSync(compressedValue, {
+        asBuffer: true,
+      }) as Buffer;
+
+      entries.push([key, value]);
       offset = valueEnd;
     }
+
+    return new Block(entries);
+  }
+
+  constructor(entries: [Buffer, Buffer][]) {
+    this._entries = entries;
   }
 
   get(key: Buffer): Buffer | undefined {
