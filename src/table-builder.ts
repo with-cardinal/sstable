@@ -18,7 +18,7 @@ export class TableBuilder {
     this.path = path;
   }
 
-  async add(key: Buffer, value: Buffer) {
+  async add(key: Buffer, value: Buffer): Promise<void> {
     if (this.previousKey && this.previousKey?.compare(key) > 0) {
       throw new Error("added out of order");
     }
@@ -42,8 +42,6 @@ export class TableBuilder {
     }
 
     this.previousKey = key;
-
-    return true;
   }
 
   // write the current block builder and start a new one
