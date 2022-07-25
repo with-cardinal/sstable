@@ -2,7 +2,8 @@
   "name": "@withcardinal/sstree",
   "version": "0.0.0",
   "description": "sstree implementation for Cardinal",
-  "private": true,
+  "main": "dist/index.js",
+  
   "scripts": {
     "test": "dotenv jest",
     "lint": "eslint src/**/*.ts",

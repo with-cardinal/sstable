@@ -1,0 +1,10 @@
+src/
+tmp/
+.github/
+.git/
+
+!dist/
+
+renovate.json
+jest.config.js
+.eslintrc.json
