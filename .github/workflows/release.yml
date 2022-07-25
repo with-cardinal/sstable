@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_ACCESS_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo NODE_VERSION=$(jq -r .volta.node package.json) >> $GITHUB_ENV
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+      - run: npm run build
+
+      - run: npm set git-tag-version false
+      - run: npm version ${{ github.event.release.tag_name }}
+
+      - run: npm publish --tag next
+        if: github.event.release.prerelease
+      - run: npm publish
+        if: "!github.event.release.prerelease"
