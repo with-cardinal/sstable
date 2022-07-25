@@ -1,0 +1,35 @@
+{
+  "extends": [
+    "config:base",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(deps)",
+    ":semanticCommitScopeDisabled",
+    "default:automergeDigest"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    }
+  ],
+  "hostRules": [
+    {
+      "matchHost": "https://npm.pkg.github.com/",
+      "hostType": "npm",
+      "encrypted": {
+        "token": "wcFMA/xDdHCJBTolAQ/+PWx77FQ6PtrRA9Jnmx65D+JWyEyk8zUxONl5j7Xwh9B8JqA141RSX6dHh/XiDsWfJTPz1lrcPp0J5TZaUlg/uyCNn3NLWcZIxnkB5rRA7hWEH7rtDmi7F2GMDHsMn4yGEn2H5b7qtn8q1WUB3byfzLFCMdSPZ1T4gAZlVnsJ9GiiH2mLjc3h8fdGKTHrv57xU3udTYVM2lO6pT4+dmgBzj6jeImyszKYl/i8V62kpH4IvI5b7F8TG3KbDi56aqayQ6x1ORNlbQaZNvqKIy6NrwRq/OR2r5VgiaRSIaVqcjleoYk54A0HZDsQ5fs+PrkVkYklWyvT/Ok+mR41tYOCZG/w0XeOUzr2LAMSbQHeR02nZcNRcr9z8EDlICLgY6UN//TvG9a27r0k78KCVYNaTvkEwTPhPWIvHxDxlXqsM57uJbGhW7EU8IZRdRJ0mpFpytPkGoqH+yhox/GBtA9B/ZhAaBZQshaaY93AAOpGM26kXsBoKCj/h787WlUFIxi+BYVw05Y1xcKI6oZ1w3WDm4afHGN4phmVJZiSfPe1xqrrXywvSfPtNiQAUxwgWrzH42vUob+JIr9/FKqLaRKXfwq5bDQnLdSKupY4Ejx5StohfNBFmdS/DIHTeoq32l2Jpe2yktKSmFbWGJgThY58XuEMZPW+achSufL8b2eDI7DSfAGOjIuzYKu3ZGUdsBYbRZnug5xE/r3endNcp2meDz7eeZozQeMeLuwvu6Eeqj58Bfiw7NCDgwZPovZgmnrMdEXkl4XSbQ5Pb5UMyifNjSTf/yo5Plthn5WnU8XkhQle7kR92N0pfPnSo+r9nPfIph4hDkW6Kt2xUnCJSwY"
+      }
+    }
+  ],
+  "npmrc": "@with-cardinal:registry=https://npm.pkg.github.com/",
+  "labels": ["dependencies"]
+}
