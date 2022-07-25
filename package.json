@@ -1,7 +1,7 @@
 {
   "name": "@withcardinal/sstable",
   "version": "0.0.0",
-  "description": "sstable implementation for Cardinal",
+  "description": "Sorted strings table implementation for Cardinal",
   "main": "dist/index.js",
 
   "scripts": {
