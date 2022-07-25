@@ -2,6 +2,12 @@
 
 Sorted strings tables for Node.js
 
+## Installation
+
+```
+npm install @withcardinal/sstable
+```
+
 ## Usage
 
 An sstable, or sorted strings table, is a simple file format that records key value pairs, sorted by key.
