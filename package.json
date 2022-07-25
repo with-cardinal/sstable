@@ -1,9 +1,9 @@
 {
-  "name": "@withcardinal/sstree",
+  "name": "@withcardinal/sstable",
   "version": "0.0.0",
-  "description": "sstree implementation for Cardinal",
+  "description": "sstable implementation for Cardinal",
   "main": "dist/index.js",
-  
+
   "scripts": {
     "test": "dotenv jest",
     "lint": "eslint src/**/*.ts",
@@ -12,11 +12,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/with-cardinal/sstree.git"
+    "url": "git+https://github.com/with-cardinal/sstable.git"
   },
   "author": "With Cardinal, LLC",
   "license": "MIT",
-  "homepage": "https://github.com/with-cardinal/sstree#readme",
+  "homepage": "https://github.com/with-cardinal/sstable#readme",
   "devDependencies": {
     "@swc/core": "1.2.218",
     "@swc/jest": "0.2.22",
