@@ -2,6 +2,7 @@ import assert from "node:assert";
 import fs, { FileHandle } from "node:fs/promises";
 import { Block } from "./block";
 import { Cursor } from "./cursor";
+import { TableCursor } from "./table-cursor";
 
 export type BlockEntryTable = [Buffer, number][];
 
@@ -134,7 +135,11 @@ export class Table {
 
   async cursor(): Promise<Cursor> {
     await this.ensureOpen();
-    return new Cursor(this.handle, this.blockEntries, this.blockEntriesEnd);
+    return new TableCursor(
+      this.handle,
+      this.blockEntries,
+      this.blockEntriesEnd
+    );
   }
 
   async close() {
