@@ -61,10 +61,15 @@ export class TableCursor implements Cursor {
     await this.ensureBlock();
     assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 
+    if (this.currentBlockOffset >= this.currentBlock.entries.length) {
+      return undefined;
+    }
+
     const [key, value] = this.currentBlock.entries[this.currentBlockOffset];
     this.currentBlockOffset++;
     return [key, value];
   }
+
   async seek(key: Buffer): Promise<void> {
     const blockIndex = blockIdx(this.entries, key);
 
