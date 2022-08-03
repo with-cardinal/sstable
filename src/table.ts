@@ -4,11 +4,11 @@ import { Block } from "./block";
 import { Cursor } from "./cursor";
 import { TableCursor } from "./table-cursor";
 
-export type BlockEntryTable = [Buffer, number][];
+export type BlockTable = [Buffer, number][];
 
 const BLOCK_CACHE_LIMIT = 4;
 
-export function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
+export function blockIdx(blockEntries: BlockTable, key: Buffer): number {
   const idx = blockEntries
     .slice()
     .reverse()
@@ -23,7 +23,7 @@ export function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
 
 export async function readBlock(
   handle: FileHandle,
-  entries: BlockEntryTable,
+  entries: BlockTable,
   blocksEnd: number,
   idx: number,
   cache: [number, Block][] = []
