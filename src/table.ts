@@ -2,8 +2,11 @@ import assert from "node:assert";
 import fs, { FileHandle } from "node:fs/promises";
 import { Block } from "./block";
 import { Cursor } from "./cursor";
+import { TableCursor } from "./table-cursor";
 
 export type BlockEntryTable = [Buffer, number][];
+
+const BLOCK_CACHE_LIMIT = 4;
 
 export function blockIdx(blockEntries: BlockEntryTable, key: Buffer): number {
   const idx = blockEntries
@@ -22,8 +25,18 @@ export async function readBlock(
   handle: FileHandle,
   entries: BlockEntryTable,
   blocksEnd: number,
-  idx: number
+  idx: number,
+  cache: [number, Block][] = []
 ): Promise<Block> {
+  // use the cache if it's available
+  if (cache.length > 0) {
+    const found = cache.findIndex(([i]) => i === idx);
+
+    if (found !== -1) {
+      return cache[found][1];
+    }
+  }
+
   const [start, end] = [
     entries[idx][1],
     idx + 1 === entries.length ? blocksEnd : entries[idx + 1][1],
@@ -35,24 +48,35 @@ export async function readBlock(
       blockBuf.byteLength
   );
 
-  return await Block.fromBuffer(blockBuf);
+  const block = await Block.fromBuffer(blockBuf);
+
+  cache.push([idx, block]);
+  if (cache.length > BLOCK_CACHE_LIMIT) {
+    cache.splice(0, cache.length - BLOCK_CACHE_LIMIT);
+  }
+
+  return block;
 }
 
 export class Table {
   private path: string;
   private handle?: FileHandle;
 
-  blockEntries: [Buffer, number][] = [];
-  blockEntriesEnd = 0;
+  private blockEntries: [Buffer, number][] = [];
+  private blockEntriesEnd = 0;
+
+  private cache: [number, Block][] = [];
 
   constructor(path: string) {
     this.path = path;
   }
 
   private async ensureOpen() {
-    if (!this.handle) {
-      this.handle = await fs.open(this.path, "r");
+    if (this.handle) {
+      return;
     }
+
+    this.handle = await fs.open(this.path, "r");
 
     const stat = await this.handle.stat();
     assert.ok(stat.size > 4, "Invalid table file");
@@ -105,7 +129,8 @@ export class Table {
         "Block read fewer bytes than expected"
       );
 
-      (await Block.fromBuffer(blockBuf)).entries.map(([key, value]) => {
+      const metaBlock = await Block.fromBuffer(blockBuf);
+      metaBlock.entries.map(([key, value]) => {
         const offset = value.readIntBE(2, 6);
         this.blockEntries.push([key, offset]);
       });
@@ -127,14 +152,19 @@ export class Table {
       this.handle,
       this.blockEntries,
       this.blockEntriesEnd,
-      keyBlockIdx
+      keyBlockIdx,
+      this.cache
     );
     return block.get(key);
   }
 
   async cursor(): Promise<Cursor> {
     await this.ensureOpen();
-    return new Cursor(this.handle, this.blockEntries, this.blockEntriesEnd);
+    return new TableCursor(
+      this.handle,
+      this.blockEntries,
+      this.blockEntriesEnd
+    );
   }
 
   async close() {
