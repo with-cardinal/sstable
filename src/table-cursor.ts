@@ -1,13 +1,13 @@
 import { Cursor } from "./cursor";
 import assert from "node:assert";
-import { BlockEntryTable, readBlock, blockIdx } from "./table";
+import { BlockTable, readBlock, blockIdx } from "./table";
 import { FileHandle } from "node:fs/promises";
 import { Block } from "./block";
 
 export class TableCursor implements Cursor {
   private handle: FileHandle;
-  private entries: BlockEntryTable;
-  private entriesEnd: number;
+  private blocks: BlockTable;
+  private blocksEnd: number;
 
   private currentBlockIndex = 0;
   private currentBlock?: Block;
@@ -15,13 +15,13 @@ export class TableCursor implements Cursor {
 
   constructor(
     handle: FileHandle | undefined,
-    entries: BlockEntryTable,
-    entriesEnd: number
+    blocks: BlockTable,
+    blocksEnd: number
   ) {
     assert.ok(handle !== undefined, "Error: invalid file handle");
     this.handle = handle;
-    this.entries = entries;
-    this.entriesEnd = entriesEnd;
+    this.blocks = blocks;
+    this.blocksEnd = blocksEnd;
   }
   close(): void {
     throw new Error("Method not implemented.");
@@ -31,15 +31,15 @@ export class TableCursor implements Cursor {
     if (!this.currentBlock) {
       this.currentBlock = await readBlock(
         this.handle,
-        this.entries,
-        this.entriesEnd,
+        this.blocks,
+        this.blocksEnd,
         this.currentBlockIndex
       );
     }
   }
 
   async next(): Promise<[Buffer, Buffer] | undefined> {
-    if (this.currentBlockIndex >= this.entries.length) {
+    if (this.currentBlockIndex >= this.blocks.length) {
       return undefined;
     }
 
@@ -54,7 +54,7 @@ export class TableCursor implements Cursor {
     }
 
     // if at the end of the table
-    if (this.currentBlockIndex >= this.entries.length) {
+    if (this.currentBlockIndex >= this.blocks.length) {
       return undefined;
     }
 
@@ -71,11 +71,11 @@ export class TableCursor implements Cursor {
   }
 
   async seek(key: Buffer): Promise<void> {
-    const blockIndex = blockIdx(this.entries, key);
+    const blockIndex = blockIdx(this.blocks, key);
 
     // no block found, just set to end of table
     if (blockIndex < 0) {
-      this.currentBlockIndex = this.entries.length;
+      this.currentBlockIndex = this.blocks.length;
       this.currentBlockOffset = 0;
       return;
     }
