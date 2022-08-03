@@ -26,6 +26,14 @@ afterAll(async () => {
   await rm(testDir, { recursive: true });
 });
 
+test("peek", async () => {
+  const t = new Table(tablePath);
+
+  const c = await t.cursor();
+
+  expect(await c.peek()).toEqual(await c.peek());
+});
+
 test("seek", async () => {
   const t = new Table(tablePath);
 

@@ -27,7 +27,13 @@ export class TableCursor implements Cursor {
     throw new Error("Method not implemented.");
   }
 
-  private async ensureBlock() {
+  // make sure the current cursor position is loaded. Returns false if the
+  // cursor is outside of the table
+  private async ensureBlock(): Promise<boolean> {
+    if (this.currentBlockIndex >= this.blocks.length) {
+      return false;
+    }
+
     if (!this.currentBlock) {
       this.currentBlock = await readBlock(
         this.handle,
@@ -36,38 +42,50 @@ export class TableCursor implements Cursor {
         this.currentBlockIndex
       );
     }
-  }
-
-  async next(): Promise<[Buffer, Buffer] | undefined> {
-    if (this.currentBlockIndex >= this.blocks.length) {
-      return undefined;
-    }
-
-    await this.ensureBlock();
     assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 
     // move to next block if at the end of the current block
     if (this.currentBlockOffset >= this.currentBlock.entries.length) {
       this.currentBlockOffset = 0;
       this.currentBlockIndex++;
-      this.currentBlock = undefined;
+
+      if (this.currentBlockIndex >= this.blocks.length) {
+        return false;
+      }
+
+      this.currentBlock = await readBlock(
+        this.handle,
+        this.blocks,
+        this.blocksEnd,
+        this.currentBlockIndex
+      );
     }
 
-    // if at the end of the table
-    if (this.currentBlockIndex >= this.blocks.length) {
-      return undefined;
-    }
+    return true;
+  }
 
-    await this.ensureBlock();
+  async peek(): Promise<[Buffer, Buffer] | undefined> {
+    const ready = await this.ensureBlock();
     assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 
-    if (this.currentBlockOffset >= this.currentBlock.entries.length) {
+    if (!ready) {
       return undefined;
+    } else {
+      return this.currentBlock.entries[this.currentBlockOffset];
     }
+  }
 
-    const [key, value] = this.currentBlock.entries[this.currentBlockOffset];
-    this.currentBlockOffset++;
-    return [key, value];
+  async next(): Promise<[Buffer, Buffer] | undefined> {
+    const ready = await this.ensureBlock();
+    assert.ok(this.currentBlock !== undefined, "Error: invalid block");
+
+    if (!ready) {
+      return undefined;
+    } else {
+      const out = this.currentBlock.entries[this.currentBlockOffset];
+      this.currentBlockOffset++;
+      return out;
+    }
   }
 
   async seek(key: Buffer): Promise<void> {
