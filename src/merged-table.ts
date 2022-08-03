@@ -22,34 +22,21 @@ export class MergedTable {
 
 class MergedCursor {
   private _cursors: Cursor[];
-  private _nextVals: ([Buffer, Buffer] | undefined)[];
 
   constructor(cursors: Cursor[]) {
     this._cursors = cursors;
-    this._nextVals = new Array(cursors.length);
   }
 
-  async next(): Promise<[Buffer, Buffer] | undefined> {
-    // fill up next vals
-    const promises: Promise<void>[] = [];
-    for (let i = 0; i < this._nextVals.length; i++) {
-      if (!this._nextVals[i]) {
-        promises.push(
-          (async () => {
-            this._nextVals[i] = await this._cursors[i].next();
-          })()
-        );
-      }
-    }
-    await Promise.all(promises);
+  private async nextCursorIndex(): Promise<number> {
+    const peeks = await Promise.all(this._cursors.map((c) => c.peek()));
 
     // read the lowest value
-    const filteredKeys = this._nextVals.filter(
+    const filteredKeys = peeks.filter(
       (val): val is [Buffer, Buffer] => val !== undefined
     );
 
     if (filteredKeys.length === 0) {
-      return undefined;
+      return -1;
     }
 
     const sortedKeys = filteredKeys
@@ -60,22 +47,25 @@ class MergedCursor {
     const minIndex = filteredKeys.findIndex((val) => val[0].equals(minKey));
     assert.ok(minIndex !== -1, "Unexpected error: index not found");
 
-    const out = this._nextVals[minIndex];
-    this._nextVals[minIndex] = undefined;
+    return minIndex;
+  }
 
-    this._nextVals.map((val) => {
-      if (val !== undefined) {
-        if (val[0].compare(minKey) === 0) {
-          return undefined;
-        }
-
-        return val;
-      }
-
+  async peek(): Promise<[Buffer, Buffer] | undefined> {
+    const nextIndex = await this.nextCursorIndex();
+    if (nextIndex === -1) {
       return undefined;
-    });
+    } else {
+      return await this._cursors[nextIndex].next();
+    }
+  }
 
-    return out;
+  async next(): Promise<[Buffer, Buffer] | undefined> {
+    const nextIndex = await this.nextCursorIndex();
+    if (nextIndex === -1) {
+      return undefined;
+    } else {
+      return await this._cursors[nextIndex].next();
+    }
   }
 
   async seek(key: Buffer): Promise<void> {
