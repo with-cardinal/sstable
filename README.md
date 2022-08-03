@@ -139,7 +139,11 @@ Closes the `Table` and the underlying file.
 
 ## `Cursor`
 
-Returned by calling `cursor` on a `Table` instance.
+Returned by calling `cursor` on a `Table` or `MergedTable` instance.
+
+### `peek() : Promise<[Buffer, Buffer] | undefined>`
+
+Peeks the next value in the sstable
 
 ### `next() : Promise<[Buffer, Buffer] | undefined>`
 
@@ -187,8 +191,6 @@ Returns a new `Cursor` for iterating the `MergedTable` from the start.
 #### Returns
 
 - A new cursor
-
-Construct a new `Table Builder`
 
 ## License
 
