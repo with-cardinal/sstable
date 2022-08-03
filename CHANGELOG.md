@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.0 - 2022-08-03
+
+- Adds `peek` to cursors.
+
+
 ## v1.1.0 - 2022-08-03
 
 - Adds `MergedTable` to allow reading multiple tables at once.
