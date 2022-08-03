@@ -157,6 +157,39 @@ Seek to `key` in the sstable. If `key` doesn't exist, seek to the position prior
 
 - `key` - the position to seek to in the sstable. If `key` doesn't exist in the table the seek will go to just prior to the next key greater than `key`.
 
+## `MergedTable`
+
+### `constructor(tables: Table[])`
+
+Construct a new `MergedTable` from a set of tables. The `MergedTable` will 
+provide a merged view of all the tables at once, giving priority to lower 
+indexed tables in the `tables` array.
+
+Because `MergedTable` objects are composed of multiple `Table` objects, be sure
+to close all of the `Table` objects after you're done with the `MergedTable`.
+
+### `get(key: Buffer): Promise<Buffer | undefined>`
+
+Read the value at `key`, or return `undefined` if the key does not exist.
+
+#### Parameters
+
+- `key` - the key to look up
+
+#### Returns
+
+- `Buffer` if the key is found, `undefined` otherwise
+
+### `cursor() : Promise<Cursor>`
+
+Returns a new `Cursor` for iterating the `MergedTable` from the start.
+
+#### Returns
+
+- A new cursor
+
+Construct a new `Table Builder`
+
 ## License
 
 MIT. See LICENSE for details.
