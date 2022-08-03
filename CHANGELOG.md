@@ -1,5 +1,11 @@
 # Changelog
 
+
+## v1.2.1 - 2022-08-03
+
+- Export `Cursor`
+
+
 ## v1.2.0 - 2022-08-03
 
 - Adds `peek` to cursors.
