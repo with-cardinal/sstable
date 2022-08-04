@@ -59,7 +59,7 @@ export async function readBlock(
 }
 
 export class Table {
-  private path: string;
+  private _path: string;
   private handle?: FileHandle;
 
   private blockEntries: [Buffer, number][] = [];
@@ -68,7 +68,11 @@ export class Table {
   private cache: [number, Block][] = [];
 
   constructor(path: string) {
-    this.path = path;
+    this._path = path;
+  }
+
+  get path(): string {
+    return this._path;
   }
 
   private async ensureOpen() {
@@ -76,7 +80,7 @@ export class Table {
       return;
     }
 
-    this.handle = await fs.open(this.path, "r");
+    this.handle = await fs.open(this._path, "r");
 
     const stat = await this.handle.stat();
     assert.ok(stat.size > 4, "Invalid table file");
