@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.2 - 2022-08-04
+
+- Fix assertion placement in cursors
 
 ## v1.2.1 - 2022-08-03
 
