@@ -105,6 +105,10 @@ Flush final data and close the `TableBuilder`.
 
 Construct a new table from the file at `path`.
 
+### `path : string`
+
+Get path for this table.
+
 ### `get(key: Buffer) : Promise<Buffer | undefined>`
 
 Read the value at `key`, or return `undefined` if the key does not exist.
