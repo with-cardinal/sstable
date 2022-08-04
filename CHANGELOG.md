@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.3 - 2022-08-04
+
+- Get paths for tables
+
 ## v1.2.2 - 2022-08-04
 
 - Fix assertion placement in cursors
