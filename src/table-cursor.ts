@@ -66,22 +66,22 @@ export class TableCursor implements Cursor {
 
   async peek(): Promise<[Buffer, Buffer] | undefined> {
     const ready = await this.ensureBlock();
-    assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 
     if (!ready) {
       return undefined;
     } else {
+      assert.ok(this.currentBlock !== undefined, "Error: invalid block");
       return this.currentBlock.entries[this.currentBlockOffset];
     }
   }
 
   async next(): Promise<[Buffer, Buffer] | undefined> {
     const ready = await this.ensureBlock();
-    assert.ok(this.currentBlock !== undefined, "Error: invalid block");
 
     if (!ready) {
       return undefined;
     } else {
+      assert.ok(this.currentBlock !== undefined, "Error: invalid block");
       const out = this.currentBlock.entries[this.currentBlockOffset];
       this.currentBlockOffset++;
       return out;
