@@ -12,7 +12,7 @@ export class Memtable {
     return Array.from(this._map.keys()).length;
   }
 
-  put(key: Buffer, value: Buffer): void {
+  add(key: Buffer, value: Buffer): void {
     const keyString = key.toString();
 
     if (this._map.has(keyString)) {

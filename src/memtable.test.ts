@@ -8,7 +8,7 @@ test("basic usage", () => {
 
   const iterations = 1000;
   for (let i = 0; i < iterations; i++) {
-    mt.put(Buffer.from(`key${i}`), Buffer.from(`value${i}`));
+    mt.add(Buffer.from(`key${i}`), Buffer.from(`value${i}`));
   }
 
   for (let i = 0; i < iterations; i++) {
@@ -25,7 +25,7 @@ test("save", async () => {
   const mt = new Memtable();
   const iterations = 1000;
   for (let i = 0; i < iterations; i++) {
-    mt.put(
+    mt.add(
       Buffer.from(i.toString().padStart(4, "0")),
       Buffer.from(`value${i}`)
     );

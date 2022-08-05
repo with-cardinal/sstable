@@ -196,6 +196,36 @@ Returns a new `Cursor` for iterating the `MergedTable` from the start.
 
 - A new cursor
 
+## `Memtable`
+
+`Memtable` is a data structure that's helpful for building up sstables. It holds
+all data in memory until it is saved to a new sstable.
+
+### `constuctor()`
+
+Instantiate a new Memtable.
+
+### `byteLength` : number
+
+The number of bytes currently stored in this memtable.
+
+### `size` : number
+
+The number of records currently stored in this memtable.
+
+### `add(key: Buffer, value: Buffer) : Promise<void>`
+
+Add a key value pair to the memtable.
+
+### `get(key: Buffer): Promise<Buffer>`
+
+Get the value for `key` in the memtable. This performance a search through the
+memtable, so shouldn't be relied on to be efficient.
+
+### `save(path: string) : Promise<void>`
+
+Save a new sstable at `path` using the data in this memtable.
+
 ## License
 
 MIT. See LICENSE for details.
