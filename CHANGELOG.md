@@ -1,6 +1,10 @@
 # Changelog
 
-## v1.3.0- 2022-08-08
+## v1.3.1 - 2022-08-08
+
+- Actually export memtables
+
+## v1.3.1 - 2022-08-08
 
 - Add memtables
 
