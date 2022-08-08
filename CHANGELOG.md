@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.0- 2022-08-08
+
+- Add memtables
+
 ## v1.2.3 - 2022-08-04
 
 - Get paths for tables
