@@ -6,7 +6,7 @@
     ":semanticCommitScopeDisabled",
     "default:automergeDigest"
   ],
-  "assigneesFromCodeOwners": true,
+  "assignees": "@nalanj",
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
