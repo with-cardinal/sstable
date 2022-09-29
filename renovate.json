@@ -1,0 +1,27 @@
+{
+  "extends": [
+    "config:base",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(deps)",
+    ":semanticCommitScopeDisabled",
+    "default:automergeDigest"
+  ],
+  "assignees": ["nalanj"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    }
+  ],
+  "npmrc": "@with-cardinal:registry=https://npm.pkg.github.com/",
+  "labels": ["dependencies"]
+}
