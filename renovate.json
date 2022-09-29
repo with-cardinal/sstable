@@ -22,6 +22,5 @@
       "automerge": true
     }
   ],
-  "npmrc": "@with-cardinal:registry=https://npm.pkg.github.com/",
   "labels": ["dependencies"]
 }
