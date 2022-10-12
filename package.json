@@ -31,7 +31,7 @@
     "typescript": "4.8.4"
   },
   "volta": {
-    "node": "16.17.1"
+    "node": "16.18.0"
   },
   "dependencies": {
     "eslint-plugin-prettier": "4.2.1",
