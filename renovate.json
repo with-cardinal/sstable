@@ -5,23 +5,8 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(deps)",
     ":semanticCommitScopeDisabled",
-    "default:automergeDigest"
   ],
   "assignees": ["nalanj"],
-  "lockFileMaintenance": {
-    "enabled": true,
-    "automerge": true
-  },
-  "packageRules": [
-    {
-      "matchDepTypes": ["devDependencies", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchCurrentVersion": "!/^0/",
-      "automerge": true
-    }
-  ],
+  "reviewers": ["nalanj"],
   "labels": ["dependencies"]
 }
