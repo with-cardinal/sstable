@@ -1,4 +1,6 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Public renovate config. Injected into repo by Terraform, do not edit manually",
   "dependencyDashboard": true,
   "extends": [
     "config:base",
